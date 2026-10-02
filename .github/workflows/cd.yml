@@ -1,0 +1,9 @@
+# Deploy workflow is written in Phase 22/23.
+name: cd
+on:
+  workflow_dispatch:
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "CD not configured yet"

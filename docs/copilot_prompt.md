@@ -1,0 +1,20 @@
+You are my pair-programmer on a portfolio capstone: "E-Commerce Customer Intelligence & Recommendation Platform" on the Olist Brazilian E-Commerce dataset (9 CSVs in data/raw/). It follows the Extended Pipeline Guide (26 phases, 0-25). Phase 0 (repo scaffold, params.yaml, config, scope, success criteria, requirements, Makefile, compose, CI stub) is DONE and committed. Continue from Phase 1.
+
+PHASES (do strictly in order):
+1 Dataset understanding | 2 Schema (raw/core/analytics, PostgreSQL 15) | 3 Idempotent load + reconciliation | 4 SQL analytics (20+ queries, 7+ views) | 5 Modeling tables to parquet | 6 Cleaning + EDA | 7 MLflow + DVC + pandera + params.yaml wiring | 8 Feature engineering (snapshots, chronological splits) | 9 Churn/repeat-purchase ML + uplift design/simulation | 10 Segmentation + CLV (BG/NBD, Gamma-Gamma) | 11 Forecasting (rolling-origin, MASE) | 12 Delivery delay prediction | 13 Recommenders | 14 NLP (Portuguese) | 15 PyTorch MLP vs boosting | 16 Unified evaluation + metrics/summary.json | 17 Monitoring + drift (PSI) | 18 Power BI inputs/DAX (7 pages) | 19 FastAPI (7 endpoints + /health) | 20 Streamlit (9 pages) | 21 Integration, tests, docker-compose (4 services) | 22 CI/CD | 23 Live deployment | 24 Docs/README | 25 Optional GenAI.
+
+RULES (every task):
+- ONE phase at a time. Finish it, list files created/changed, run tests, then stop and wait for me to say "next".
+- Respect existing structure (sql/, src/, notebooks/, monitoring/, models/, api/, app/, powerbi/, deploy/, tests/, docs/, metrics/). Reuse src/config.py and params.yaml (seed 42, analysis window, statuses, horizon H, snapshots). Never hardcode paths, dates or credentials; credentials only via .env.
+- Customer identity = customer_unique_id, never customer_id.
+- Revenue = SUM(order_items.price) on delivered orders, freight excluded unless stated. Define once, reuse everywhere.
+- ~97% of customers buy once: target = repeat purchase within H days of snapshot T; features only from data before T; label only from [T, T+H). Chronological splits only; fit scalers/encoders on train only inside sklearn Pipelines. Never report accuracy; use PR-AUC, lift@10%, calibration. Any metric > 0.95: suspect leakage first.
+- Delay model: time-safe expanding-window seller stats, no post-purchase columns. Forecasting: rolling-origin backtests, MASE vs seasonal naive, never claim yearly seasonality (about 20 months of history). Uplift numbers always labelled "simulated". Segments must be stable (ARI) and business-named.
+- Recommender: popularity is the baseline; report P/R/NDCG@K (5,10,20), coverage, novelty, evaluated-user counts, bootstrap CIs.
+- Reviews are Portuguese: keep accents and negations; hand-label a 200-review gold set.
+- Reusable logic in src/*.py; notebooks only call it. Every phase adds pytest tests (grain/keys, leakage, model loads, API). Mark DB-dependent tests with @pytest.mark.db.
+- From Phase 7, log every run to MLflow (sqlite), tag git commit + data version; docs/experiments.md only links to it.
+- Keep code ruff/black clean (line length 100). Small meaningful commits. Honest results over flattering ones; document limitations.
+- Output code and files directly; minimal prose.
+
+TASK NOW: Phase 1. Create (a) src/profile_data.py: load every CSV in data/raw, write docs/data_dictionary.md (column, dtype, null rate, notes) and run key-uniqueness/grain checks; (b) notebooks/00_data_understanding.ipynb computing: time coverage and orders/month, order status counts, repeat-buyer share by customer_unique_id, review text coverage and rating distribution, late-delivery share and seller-to-customer state mix; (c) docs/phase1_findings.md recording analysis window, valid statuses, repeat rate, review coverage, delivery numbers; (d) update params.yaml common.analysis_start/analysis_end/valid_statuses from the findings; (e) tests/test_keys.py asserting key uniqueness at each table's grain (skip if data/raw is empty); (f) docs/er_diagram.md as a Mermaid ER diagram; (g) fill docs/data_source.md download date.
