@@ -8,12 +8,8 @@ import pytest
 
 from src.config import DATA_RAW
 
-RAW_FILES = list(DATA_RAW.glob("*.csv")) if DATA_RAW.exists() else []
-RAW_AVAILABLE = len(RAW_FILES) >= 8
-
 pytestmark = pytest.mark.skipif(
-    not RAW_AVAILABLE,
-    reason="Raw Olist CSV dataset is not present in data/raw/",
+    not any(DATA_RAW.glob("*.csv")), reason="raw CSVs not available (CI)"
 )
 
 
