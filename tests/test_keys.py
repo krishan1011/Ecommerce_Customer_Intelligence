@@ -3,9 +3,9 @@
 Skips gracefully if data/raw/ is empty or CSVs are not present.
 """
 
-from pathlib import Path
 import pandas as pd
 import pytest
+
 from src.config import DATA_RAW
 
 RAW_FILES = list(DATA_RAW.glob("*.csv")) if DATA_RAW.exists() else []

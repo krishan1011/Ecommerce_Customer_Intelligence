@@ -1,4 +1,4 @@
-from src.config import RANDOM_STATE, ROOT, PARAMS, VALID_STATUSES
+from src.config import PARAMS, RANDOM_STATE, ROOT, VALID_STATUSES
 
 
 def test_seed_and_params():

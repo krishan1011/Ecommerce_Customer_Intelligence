@@ -1,4 +1,5 @@
 import pytest
+
 from src.db import check_connection
 
 
