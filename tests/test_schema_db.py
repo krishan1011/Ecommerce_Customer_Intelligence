@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 from sqlalchemy.exc import IntegrityError
 
 from src.db import get_engine
@@ -14,18 +14,23 @@ ROOT = Path(__file__).resolve().parents[1]
 
 @pytest.fixture(scope="module")
 def create_schema():
-    env = os.environ.copy()
-    env["ALLOW_SCHEMA_RESET"] = "1"
-    result = subprocess.run(
-        [sys.executable, "-m", "src.db", "schema", "--yes"],
-        cwd=ROOT,
-        env=env,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    assert "Schemas created:" in result.stdout
-    yield
+    """Require an initialized schema without dropping a user's database."""
+    inspector = inspect(get_engine())
+    required = {
+        "category_translation",
+        "customers",
+        "sellers",
+        "products",
+        "geolocation",
+        "orders",
+        "order_items",
+        "payments",
+        "reviews",
+        "dim_customer_unique",
+        "load_reconciliation",
+    }
+    if not required.issubset(set(inspector.get_table_names(schema="core"))):
+        pytest.skip("Initialize the core schema with `python -m src.db schema --yes` first")
 
 
 @pytest.mark.db

@@ -4,7 +4,7 @@ import sys
 
 from sqlalchemy import create_engine, inspect, text
 
-from .config import DATABASE_URL, SQL_DIR
+from .config import ANALYSIS_END, ANALYSIS_START, DATABASE_URL, SQL_DIR, VALID_STATUSES
 
 
 def get_engine():
@@ -40,6 +40,62 @@ def run_schema(yes: bool = False) -> None:
         print(f"  [{s}] ({len(tables)} tables): {', '.join(tables)}")
 
 
+def run_views() -> None:
+    """Refresh the configured analytics views atomically from params.yaml."""
+    clean_views_path = SQL_DIR / "03_clean_views.sql"
+    business_metrics_path = SQL_DIR / "04_business_metrics.sql"
+    for path in (clean_views_path, business_metrics_path):
+        if not path.exists():
+            raise FileNotFoundError(f"SQL file not found at {path}")
+
+    engine = get_engine()
+    with engine.begin() as conn:
+        conn.exec_driver_sql("""
+            CREATE TABLE IF NOT EXISTS analytics.config (
+                config_id SMALLINT PRIMARY KEY CHECK (config_id = 1),
+                analysis_start DATE NOT NULL,
+                analysis_end DATE NOT NULL,
+                valid_statuses TEXT[] NOT NULL,
+                CHECK (analysis_end >= analysis_start)
+            )
+            """)
+        conn.execute(text("DELETE FROM analytics.config"))
+        conn.execute(
+            text("""
+                INSERT INTO analytics.config
+                    (config_id, analysis_start, analysis_end, valid_statuses)
+                VALUES (1, :analysis_start, :analysis_end, :valid_statuses)
+                """),
+            {
+                "analysis_start": ANALYSIS_START,
+                "analysis_end": ANALYSIS_END,
+                "valid_statuses": VALID_STATUSES,
+            },
+        )
+        conn.exec_driver_sql(clean_views_path.read_text(encoding="utf-8"))
+        conn.exec_driver_sql(business_metrics_path.read_text(encoding="utf-8"))
+
+    view_names = (
+        "monthly_kpis",
+        "customer_summary",
+        "product_performance",
+        "category_performance",
+        "seller_performance",
+        "delivery_performance",
+        "cohort_retention",
+        "review_trends",
+    )
+    with engine.connect() as conn:
+        for view_name in view_names:
+            count = conn.execute(text(f"SELECT COUNT(*) FROM analytics.{view_name}")).scalar_one()
+            print(f"analytics.{view_name}: {count:,} rows")
+    print(
+        "Analytics views refreshed for "
+        f"{ANALYSIS_START} through {ANALYSIS_END} "
+        f"with statuses {', '.join(VALID_STATUSES)}."
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Database utilities")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -49,6 +105,7 @@ def main() -> int:
     )
     subparsers.add_parser("check", help="check the database connection")
     subparsers.add_parser("load", help="load Olist CSV data into raw and core schemas")
+    subparsers.add_parser("views", help="refresh configured analytics views")
     args = parser.parse_args()
 
     if args.command == "schema":
@@ -58,6 +115,9 @@ def main() -> int:
         from .load import load_data
 
         load_data()
+        return 0
+    if args.command == "views":
+        run_views()
         return 0
     connected = check_connection()
     print(f"Database connection: {'OK' if connected else 'FAILED'}")
