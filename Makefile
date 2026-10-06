@@ -1,4 +1,4 @@
-.PHONY: setup db-up db-down test lint all load-db extract validate features train-churn segment-clv forecast train-delay train-recsys train-nlp train-dl evaluate monitor export-bi
+.PHONY: setup db-up db-down test lint schema all load-db extract validate features train-churn segment-clv forecast train-delay train-recsys train-nlp train-dl evaluate monitor export-bi
 setup:
 	python -m venv .venv
 	.venv/bin/pip install -r requirements.txt
@@ -11,6 +11,8 @@ test:
 	pytest -q
 lint:
 	ruff check . && black --check .
+
+schema: ; python -m src.db schema --yes
 
 # Pipeline targets (implemented phase by phase; see docs/copilot_prompt.md)
 all: load-db extract validate features train-churn segment-clv forecast train-delay train-recsys train-nlp train-dl evaluate monitor export-bi

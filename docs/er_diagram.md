@@ -1,105 +1,107 @@
-# Olist E-Commerce Entity-Relationship Diagram
+# Core schema entity relationship diagram
 
 ```mermaid
 erDiagram
-    CUSTOMERS ||--o{ ORDERS : "places (customer_id)"
-    ORDERS ||--|{ ORDER_ITEMS : "contains (order_id)"
-    ORDERS ||--o{ ORDER_PAYMENTS : "paid via (order_id)"
-    ORDERS ||--o{ ORDER_REVIEWS : "reviewed in (order_id)"
-    SELLERS ||--o{ ORDER_ITEMS : "fulfills (seller_id)"
-    PRODUCTS ||--o{ ORDER_ITEMS : "ordered as (product_id)"
-    CATEGORY_TRANSLATION ||--o{ PRODUCTS : "translates (product_category_name)"
-    GEOLOCATION }o--o{ CUSTOMERS : "locates prefix"
-    GEOLOCATION }o--o{ SELLERS : "locates prefix"
+    CUSTOMERS ||--o{ ORDERS : "places"
+    ORDERS ||--|{ ORDER_ITEMS : "contains"
+    PRODUCTS ||--o{ ORDER_ITEMS : "appears in"
+    SELLERS ||--o{ ORDER_ITEMS : "fulfills"
+    ORDERS ||--o{ PAYMENTS : "paid through"
+    ORDERS ||--o{ REVIEWS : "receives"
+
+    CATEGORY_TRANSLATION {
+        string category_pt PK
+        string category_en
+    }
 
     CUSTOMERS {
-        string customer_id PK "Unique per order session"
-        string customer_unique_id "Identifier for actual person"
-        string customer_zip_code_prefix
-        string customer_city
-        string customer_state
-    }
-
-    ORDERS {
-        string order_id PK "Unique order identifier"
-        string customer_id FK "References CUSTOMERS.customer_id"
-        string order_status "delivered, shipped, canceled, etc."
-        timestamp order_purchase_timestamp
-        timestamp order_approved_at
-        timestamp order_delivered_carrier_date
-        timestamp order_delivered_customer_date
-        timestamp order_estimated_delivery_date
-    }
-
-    ORDER_ITEMS {
-        string order_id PK, FK "References ORDERS.order_id"
-        int order_item_id PK "Sequential item number (1..N)"
-        string product_id FK "References PRODUCTS.product_id"
-        string seller_id FK "References SELLERS.seller_id"
-        timestamp shipping_limit_date
-        float price "Item sale price (used for revenue)"
-        float freight_value "Item freight charge"
-    }
-
-    ORDER_PAYMENTS {
-        string order_id PK, FK "References ORDERS.order_id"
-        int payment_sequential PK "Payment sequence number (1..N)"
-        string payment_type "credit_card, boleto, voucher, debit_card"
-        int payment_installments "Number of installments"
-        float payment_value "Transaction payment amount"
-    }
-
-    ORDER_REVIEWS {
-        string review_id PK "Review identifier"
-        string order_id PK, FK "References ORDERS.order_id"
-        int review_score "1 to 5 stars"
-        string review_comment_title "Optional review headline"
-        string review_comment_message "Optional review body (Portuguese)"
-        timestamp review_creation_date
-        timestamp review_answer_timestamp
-    }
-
-    PRODUCTS {
-        string product_id PK "Product SKU identifier"
-        string product_category_name FK "Portuguese category name"
-        int product_name_lenght
-        int product_description_lenght
-        int product_photos_qty
-        float product_weight_g
-        float product_length_cm
-        float product_height_cm
-        float product_width_cm
+        string customer_id PK
+        string customer_unique_id
+        int zip_prefix
+        string city
+        string state
     }
 
     SELLERS {
-        string seller_id PK "Seller merchant identifier"
-        string seller_zip_code_prefix
-        string seller_city
-        string seller_state
+        string seller_id PK
+        int zip_prefix
+        string city
+        string state
+    }
+
+    PRODUCTS {
+        string product_id PK
+        string category_pt
+        string category_en
+        int name_length
+        int description_length
+        int photos_qty
+        numeric weight_g
+        numeric length_cm
+        numeric height_cm
+        numeric width_cm
     }
 
     GEOLOCATION {
-        string geolocation_zip_code_prefix "Zip prefix (non-unique)"
-        float geolocation_lat "Latitude"
-        float geolocation_lng "Longitude"
-        string geolocation_city "City name"
-        string geolocation_state "State code"
+        int zip_prefix PK
+        numeric lat
+        numeric lng
+        string city
+        string state
     }
 
-    CATEGORY_TRANSLATION {
-        string product_category_name PK "Portuguese category name"
-        string product_category_name_english "English translated name"
+    ORDERS {
+        string order_id PK
+        string customer_id FK
+        string order_status
+        timestamp purchase_ts
+        timestamp approved_ts
+        timestamp delivered_carrier_ts
+        timestamp delivered_customer_ts
+        timestamp estimated_delivery_ts
+    }
+
+    ORDER_ITEMS {
+        string order_id PK, FK
+        int order_item_id PK
+        string product_id FK
+        string seller_id FK
+        timestamp shipping_limit_ts
+        numeric price
+        numeric freight_value
+    }
+
+    PAYMENTS {
+        string order_id PK, FK
+        int payment_sequential PK
+        string payment_type
+        smallint installments
+        numeric payment_value
+    }
+
+    REVIEWS {
+        string review_id PK
+        string order_id PK, FK
+        smallint review_score
+        string title
+        string message
+        timestamp creation_ts
+        timestamp answer_ts
+    }
+
+    DIM_CUSTOMER_UNIQUE {
+        string customer_unique_id PK
+        timestamp first_order_ts
+        timestamp last_order_ts
+        string state
+        string city
     }
 ```
 
-## Entity Notes and Key Invariants
-1. **Customer Grain (`customer_id` vs `customer_unique_id`)**:
-   - `customer_id` is 1:1 with an order row.
-   - `customer_unique_id` tracks an individual human over multiple purchases across time.
-2. **Order Revenue Definition**:
-   - `SUM(order_items.price)` on delivered orders.
-   - Payments (`order_payments.payment_value`) include freight, vouchers, and card processing fees; item prices reflect actual product merchandise value.
-3. **Review Multiplicity**:
-   - Primary key is composite `(review_id, order_id)` due to occasional multi-order reviews or duplicate survey submissions.
-4. **Geolocation**:
-   - Geolocation is a spatial lookup table with multiple coordinate samples per `zip_code_prefix`. It does not have a single-column primary key.
+`customers.customer_unique_id` identifies a person across order-specific customer IDs. It is
+indexed but is not a foreign key to `dim_customer_unique`, which is populated after the order
+facts in the Phase 3 load sequence. `products.category_pt` and `category_en` are intentionally
+not foreign keys: some source categories do not have translations. `geolocation` is a one-row-per-
+zip-prefix reference table and is not constrained to customer or seller rows.
+
+Revenue is merchandise value: `SUM(order_items.price)` for delivered orders. Freight is excluded.
