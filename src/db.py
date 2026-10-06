@@ -106,6 +106,7 @@ def main() -> int:
     subparsers.add_parser("check", help="check the database connection")
     subparsers.add_parser("load", help="load Olist CSV data into raw and core schemas")
     subparsers.add_parser("views", help="refresh configured analytics views")
+    subparsers.add_parser("extract", help="write analytics modeling views to parquet")
     args = parser.parse_args()
 
     if args.command == "schema":
@@ -118,6 +119,11 @@ def main() -> int:
         return 0
     if args.command == "views":
         run_views()
+        return 0
+    if args.command == "extract":
+        from .extract import extract_tables
+
+        extract_tables()
         return 0
     connected = check_connection()
     print(f"Database connection: {'OK' if connected else 'FAILED'}")
