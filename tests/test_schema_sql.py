@@ -47,6 +47,7 @@ CORE_TABLES = {
     "payments",
     "reviews",
     "dim_customer_unique",
+    "load_reconciliation",
 }
 
 
@@ -171,6 +172,7 @@ def test_every_core_table_documents_grain_and_primary_key_columns():
         "payments": ("order_id", "payment_sequential"),
         "reviews": ("review_id", "order_id"),
         "dim_customer_unique": ("customer_unique_id",),
+        "load_reconciliation": ("run_ts", "table_name"),
     }.items():
         for column in columns:
             assert re.search(rf"COMMENT\s+ON\s+COLUMN\s+core\.{table}\.{column}\s+IS", SQL)

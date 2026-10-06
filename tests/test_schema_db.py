@@ -42,6 +42,7 @@ def test_schema_and_core_primary_keys_exist(create_schema):
         "payments",
         "reviews",
         "dim_customer_unique",
+        "load_reconciliation",
     }
     with get_engine().connect() as conn:
         schemas = set(

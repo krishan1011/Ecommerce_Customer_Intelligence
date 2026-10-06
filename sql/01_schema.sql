@@ -218,6 +218,18 @@ CREATE TABLE core.dim_customer_unique (
     city TEXT
 );
 
+-- 2.11 Load Reconciliation (one record per table per load run)
+CREATE TABLE core.load_reconciliation (
+    run_ts TIMESTAMPTZ NOT NULL,
+    table_name TEXT NOT NULL,
+    csv_rows BIGINT,
+    raw_rows BIGINT,
+    core_rows BIGINT,
+    dropped_rows BIGINT,
+    note TEXT,
+    PRIMARY KEY (run_ts, table_name)
+);
+
 -- ============================================================================
 -- 3. INDEXES
 -- ============================================================================
@@ -280,3 +292,7 @@ COMMENT ON COLUMN core.reviews.review_score IS 'Customer rating between 1 (worst
 
 COMMENT ON TABLE core.dim_customer_unique IS 'Grain: One row per unique individual human customer across lifetime history.';
 COMMENT ON COLUMN core.dim_customer_unique.customer_unique_id IS 'Primary key: Unique individual customer identifier.';
+
+COMMENT ON TABLE core.load_reconciliation IS 'Grain: One reconciliation record per load run and source or transformation table.';
+COMMENT ON COLUMN core.load_reconciliation.run_ts IS 'Composite primary key component: Load transaction timestamp.';
+COMMENT ON COLUMN core.load_reconciliation.table_name IS 'Composite primary key component: Source, core, or orphan reconciliation name.';

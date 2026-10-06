@@ -48,10 +48,16 @@ def main() -> int:
         "--yes", action="store_true", help="confirm dropping raw, core, and analytics"
     )
     subparsers.add_parser("check", help="check the database connection")
+    subparsers.add_parser("load", help="load Olist CSV data into raw and core schemas")
     args = parser.parse_args()
 
     if args.command == "schema":
         run_schema(yes=args.yes)
+        return 0
+    if args.command == "load":
+        from .load import load_data
+
+        load_data()
         return 0
     connected = check_connection()
     print(f"Database connection: {'OK' if connected else 'FAILED'}")

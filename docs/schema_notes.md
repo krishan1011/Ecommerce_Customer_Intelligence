@@ -24,6 +24,7 @@
 | `payments` | One row per payment sequence within an order | (`order_id`, `payment_sequential`) | `order_id` → `orders.order_id` | Installments allow zero; payment type includes `not_defined`. |
 | `reviews` | One review record for an order | (`review_id`, `order_id`) | `order_id` → `orders.order_id` | Composite key accommodates duplicate review IDs across orders; score is constrained to 1–5. |
 | `dim_customer_unique` | One row per persistent individual customer | `customer_unique_id` | None | Person-level dimension; populated after order facts in the Phase 3 load sequence. |
+| `load_reconciliation` | One source/transformation outcome per load run | (`run_ts`, `table_name`) | None | Append-only run history with independent CSV, raw, core, and dropped row counts. |
 
 ## Phase 3 load order
 
@@ -39,3 +40,6 @@ Load core tables in dependency order:
 8. `payments`
 9. `reviews`
 10. `dim_customer_unique`
+
+The loader writes one run of reconciliation rows after transforming the source tables. Those rows
+are retained across repeat loads for audit history.

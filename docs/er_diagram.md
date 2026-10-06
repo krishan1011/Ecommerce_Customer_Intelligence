@@ -96,6 +96,16 @@ erDiagram
         string state
         string city
     }
+
+    LOAD_RECONCILIATION {
+        timestamp run_ts PK
+        string table_name PK
+        bigint csv_rows
+        bigint raw_rows
+        bigint core_rows
+        bigint dropped_rows
+        string note
+    }
 ```
 
 `customers.customer_unique_id` identifies a person across order-specific customer IDs. It is
