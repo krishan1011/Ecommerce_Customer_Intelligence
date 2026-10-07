@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .config import DATA_PROCESSED
+from .config import CLEANING_PARAMS, DATA_PROCESSED
 from .extract import _normalize_dtypes
 from .validation import validate_clean_tables
 
@@ -194,7 +194,11 @@ def _clean_one(name: str, frame: pd.DataFrame) -> pd.DataFrame:
     if name == "products":
         result = impute_product_dims(result)
         if "price_mean" in result:
-            result["price_capped"] = winsorize_for_model(result["price_mean"], 0.01, 0.99)
+            result["price_capped"] = winsorize_for_model(
+                result["price_mean"],
+                CLEANING_PARAMS["winsor_lower"],
+                CLEANING_PARAMS["winsor_upper"],
+            )
         for column in ("weight_g", "length_cm", "height_cm", "width_cm", "volume_cm3"):
             if column in result:
                 result[column] = pd.to_numeric(result[column], errors="coerce").astype("float32")
@@ -203,9 +207,21 @@ def _clean_one(name: str, frame: pd.DataFrame) -> pd.DataFrame:
                 result[column] = pd.to_numeric(result[column], errors="coerce").astype("Int32")
     if name == "orders":
         result, _ = flag_inconsistencies(result)
-        result["price_capped"] = winsorize_for_model(result["price"], 0.01, 0.99)
-        result["freight_capped"] = winsorize_for_model(result["freight_value"], 0.01, 0.99)
-        result = result.loc[pd.to_numeric(result["price"], errors="coerce").ge(0)].copy()
+        result["price_capped"] = winsorize_for_model(
+            result["price"],
+            CLEANING_PARAMS["winsor_lower"],
+            CLEANING_PARAMS["winsor_upper"],
+        )
+        result["freight_capped"] = winsorize_for_model(
+            result["freight_value"],
+            CLEANING_PARAMS["winsor_lower"],
+            CLEANING_PARAMS["winsor_upper"],
+        )
+        result = result.loc[
+            pd.to_numeric(result["price"], errors="coerce").ge(
+                CLEANING_PARAMS["minimum_valid_item_price"]
+            )
+        ].copy()
     if name == "customers":
         result = result.rename(columns={"state": "customer_state"})
     if name == "reviews":

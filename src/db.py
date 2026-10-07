@@ -8,6 +8,8 @@ from .config import ANALYSIS_END, ANALYSIS_START, DATABASE_URL, SQL_DIR, VALID_S
 
 
 def get_engine():
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL is missing; set it in the local .env file.")
     return create_engine(DATABASE_URL, pool_pre_ping=True)
 
 

@@ -16,3 +16,36 @@ churn:
 monitoring:
   psi_alert: 0.2
   min_batch_size: 200
+
+cleaning:
+  winsor_lower: 0.01
+  winsor_upper: 0.99
+  minimum_valid_item_price: 0
+
+extraction:
+  read_chunksize: 50000
+  categorical_min_unique: 20
+  categorical_max_unique: 1000
+  categorical_row_fraction: 0.02
+
+mlflow:
+  tracking_uri: "sqlite:///mlflow.db"
+  experiments: ["churn", "segments", "clv", "forecast", "delay", "recsys", "nlp", "dl"]
+
+validation:
+  soft_null_rate_limit: 0.05
+  row_count_tolerance_pct: 5.0
+  unusual_category_min_count: 5
+  nonnegative_minimum: 0
+  minimum_count: 1
+  probability_min: 0
+  probability_max: 1
+  review_score_min: 1
+  review_score_max: 5
+
+dvc:
+  remote_name: "storage"
+
+load:
+  retry_attempts: 3
+  retry_backoff_seconds: 1

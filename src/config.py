@@ -19,7 +19,17 @@ RANDOM_STATE = PARAMS["common"]["random_state"]
 ANALYSIS_START = PARAMS["common"]["analysis_start"]
 ANALYSIS_END = PARAMS["common"]["analysis_end"]
 VALID_STATUSES = PARAMS["common"]["valid_statuses"]
+CLEANING_PARAMS = PARAMS["cleaning"]
+EXTRACTION_PARAMS = PARAMS["extraction"]
+MLFLOW_PARAMS = PARAMS["mlflow"]
+VALIDATION_PARAMS = PARAMS["validation"]
+DVC_PARAMS = PARAMS["dvc"]
+LOAD_PARAMS = PARAMS["load"]
+MLFLOW_TRACKING_URI = MLFLOW_PARAMS["tracking_uri"]
+MLFLOW_EXPERIMENTS = MLFLOW_PARAMS["experiments"]
+VALIDATION_SOFT_NULL_RATE_LIMIT = VALIDATION_PARAMS["soft_null_rate_limit"]
+VALIDATION_ROW_COUNT_TOLERANCE_PCT = VALIDATION_PARAMS["row_count_tolerance_pct"]
+VALIDATION_UNUSUAL_CATEGORY_MIN_COUNT = VALIDATION_PARAMS["unusual_category_min_count"]
+DVC_REMOTE_NAME = DVC_PARAMS["remote_name"]
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql+psycopg2://ecom:change_me@localhost:5432/ecommerce"
-)
+DATABASE_URL = os.getenv("DATABASE_URL")

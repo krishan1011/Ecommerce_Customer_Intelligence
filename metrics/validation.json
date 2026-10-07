@@ -1,0 +1,114 @@
+{
+  "tables": [
+    {
+      "table": "orders_enriched",
+      "rows": 112279,
+      "hard_failures": 0,
+      "hard_failure_details": [],
+      "soft_warnings": [
+        "seller_state: 1 category value(s) occur fewer than 5 rows",
+        "category_en: 1 category value(s) occur fewer than 5 rows"
+      ],
+      "status": "WARN"
+    },
+    {
+      "table": "customer_orders",
+      "rows": 96211,
+      "hard_failures": 0,
+      "hard_failure_details": [],
+      "soft_warnings": [],
+      "status": "PASS"
+    },
+    {
+      "table": "interactions",
+      "rows": 99915,
+      "hard_failures": 0,
+      "hard_failure_details": [],
+      "soft_warnings": [
+        "category_en: 1 category value(s) occur fewer than 5 rows"
+      ],
+      "status": "WARN"
+    },
+    {
+      "table": "products_enriched",
+      "rows": 32951,
+      "hard_failures": 0,
+      "hard_failure_details": [],
+      "soft_warnings": [
+        "review_avg: null rate 10.66% exceeds configured 5.00%",
+        "share_low_score: null rate 10.66% exceeds configured 5.00%",
+        "category_en: 3 category value(s) occur fewer than 5 rows"
+      ],
+      "status": "WARN"
+    },
+    {
+      "table": "reviews_clean",
+      "rows": 96095,
+      "hard_failures": 0,
+      "hard_failure_details": [],
+      "soft_warnings": [
+        "title: null rate 88.34% exceeds configured 5.00%",
+        "message: null rate 59.51% exceeds configured 5.00%",
+        "review_text: null rate 57.74% exceeds configured 5.00%",
+        "category_en: 1 category value(s) occur fewer than 5 rows"
+      ],
+      "status": "WARN"
+    },
+    {
+      "table": "clean/orders_clean",
+      "rows": 112279,
+      "hard_failures": 0,
+      "hard_failure_details": [],
+      "soft_warnings": [
+        "seller_state: 1 category value(s) occur fewer than 5 rows",
+        "category_en: 1 category value(s) occur fewer than 5 rows"
+      ],
+      "status": "WARN"
+    },
+    {
+      "table": "clean/customers_clean",
+      "rows": 96211,
+      "hard_failures": 0,
+      "hard_failure_details": [],
+      "soft_warnings": [],
+      "status": "PASS"
+    },
+    {
+      "table": "clean/interactions_clean",
+      "rows": 99915,
+      "hard_failures": 0,
+      "hard_failure_details": [],
+      "soft_warnings": [
+        "category_en: 1 category value(s) occur fewer than 5 rows"
+      ],
+      "status": "WARN"
+    },
+    {
+      "table": "clean/products_clean",
+      "rows": 32951,
+      "hard_failures": 0,
+      "hard_failure_details": [],
+      "soft_warnings": [
+        "review_avg: null rate 10.66% exceeds configured 5.00%",
+        "share_low_score: null rate 10.66% exceeds configured 5.00%",
+        "category_en: 3 category value(s) occur fewer than 5 rows"
+      ],
+      "status": "WARN"
+    },
+    {
+      "table": "clean/reviews_clean",
+      "rows": 95568,
+      "hard_failures": 0,
+      "hard_failure_details": [],
+      "soft_warnings": [
+        "title: null rate 88.29% exceeds configured 5.00%",
+        "message: null rate 59.48% exceeds configured 5.00%",
+        "review_text: null rate 57.71% exceeds configured 5.00%",
+        "category_en: 1 category value(s) occur fewer than 5 rows"
+      ],
+      "status": "WARN"
+    }
+  ],
+  "hard_failure_count": 0,
+  "soft_warning_count": 20
+}

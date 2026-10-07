@@ -6,6 +6,7 @@ models/*
 !models/.gitkeep
 mlruns/
 mlflow.db
+mlartifacts/
 .dvc/cache
 .env
 __pycache__/

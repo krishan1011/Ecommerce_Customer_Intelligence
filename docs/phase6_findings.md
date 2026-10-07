@@ -98,3 +98,12 @@ repeat-versus-one-time revenue effect is small despite its p-value.
 - **Risks:** one-time buyers dominate; review scores and text are noisy and
   text is frequently absent; post-purchase fields can leak future information.
   Large samples can make small associations look statistically decisive.
+
+## Leakage rules for Phase 8
+
+Imputation medians, winsorization caps, scalers, and encoders must be refit on
+training data only, inside chronological sklearn pipelines or independently
+for each snapshot. Never estimate these transformations on the full analysis
+window. The clean-table columns computed with full-window statistics, including
+imputed product dimensions and capped price/freight columns, are for EDA only;
+recompute them from each training fold before model fitting.

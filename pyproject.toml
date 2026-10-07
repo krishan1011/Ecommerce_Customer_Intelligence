@@ -12,4 +12,7 @@ target-version = ["py311"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["db: needs a running PostgreSQL (skipped in CI)"]
+markers = [
+    "db: needs a running PostgreSQL (skipped in CI)",
+    "slow: long-running or write-heavy test, opt in explicitly",
+]

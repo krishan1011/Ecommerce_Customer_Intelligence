@@ -1,2 +1,87 @@
-# Pipeline stages are added from Phase 7 onward.
-stages: {}
+stages:
+  extract:
+    cmd: python -m src.db extract
+    deps:
+      - params.yaml
+      - src/config.py
+      - src/db.py
+      - src/extract.py
+      - sql/03_clean_views.sql
+      - sql/04_business_metrics.sql
+      - sql/05_modeling_tables.sql
+    params:
+      - common.analysis_start
+      - common.analysis_end
+      - common.valid_statuses
+      - extraction
+    outs:
+      - data/processed/orders_enriched.parquet
+      - data/processed/customer_orders.parquet
+      - data/processed/interactions.parquet
+      - data/processed/products_enriched.parquet
+      - data/processed/reviews_clean.parquet
+      - data/processed/manifest.json
+    always_changed: false
+
+  clean:
+    cmd: python -m src.cleaning run
+    deps:
+      - params.yaml
+      - src/config.py
+      - src/extract.py
+      - src/cleaning.py
+      - src/validation.py
+      - data/processed/orders_enriched.parquet
+      - data/processed/customer_orders.parquet
+      - data/processed/interactions.parquet
+      - data/processed/products_enriched.parquet
+      - data/processed/reviews_clean.parquet
+      - data/raw/olist_products_dataset.csv
+    params:
+      - common.analysis_start
+      - common.analysis_end
+      - cleaning
+      - extraction
+      - validation
+    outs:
+      - data/processed/clean
+
+  validate:
+    cmd: python -m src.validation run
+    deps:
+      - params.yaml
+      - src/config.py
+      - src/validation.py
+      - data/processed/manifest.json
+      - data/processed/orders_enriched.parquet
+      - data/processed/customer_orders.parquet
+      - data/processed/interactions.parquet
+      - data/processed/products_enriched.parquet
+      - data/processed/reviews_clean.parquet
+      - data/processed/clean
+    params:
+      - common.analysis_start
+      - common.analysis_end
+      - validation
+    metrics:
+      - metrics/validation.json:
+          cache: false
+    outs:
+      - docs/validation_report.md
+
+# Later phases:
+# features:
+#   cmd: python -m src.features build
+#   deps: [src/features.py, data/processed/clean]
+# train_churn:
+#   cmd: python -m src.churn train
+#   deps: [src/churn.py, data/processed/clean]
+# train_delay:
+#   cmd: python -m src.delay train
+#   deps: [src/delay.py, data/processed/clean]
+# forecast:
+#   cmd: python -m src.forecast run
+#   deps: [src/forecast.py, data/processed/clean]
+# evaluate:
+#   cmd: python -m src.evaluate
+#   deps: [src/evaluate.py, metrics]

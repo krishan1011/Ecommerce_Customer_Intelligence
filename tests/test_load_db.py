@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from sqlalchemy import text
 
@@ -5,10 +7,12 @@ from src.config import DATA_RAW
 from src.db import get_engine
 from src.load import RAW_FILES, load_data
 
-pytestmark = pytest.mark.db
+pytestmark = [pytest.mark.db, pytest.mark.slow]
 
 
 def test_load_is_idempotent_and_reconciles_source_data():
+    if os.getenv("RUN_LOAD_TEST") != "1":
+        pytest.skip("Set RUN_LOAD_TEST=1 to run the slow, write-heavy Neon load test")
     missing = [filename for filename in RAW_FILES.values() if not (DATA_RAW / filename).is_file()]
     if missing:
         pytest.skip(f"Olist CSV files missing under {DATA_RAW}: {', '.join(missing)}")

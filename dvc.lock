@@ -1,0 +1,212 @@
+schema: '2.0'
+stages:
+  extract:
+    cmd: python -m src.db extract
+    deps:
+    - path: params.yaml
+      hash: md5
+      md5: fb5a0a3d54ff8ff8d94f2fe7049101f2
+      size: 1211
+    - path: sql/03_clean_views.sql
+      hash: md5
+      md5: 8a62ae1d6195c6b8ec60f84fad210321
+      size: 14296
+    - path: sql/04_business_metrics.sql
+      hash: md5
+      md5: 3ba880ef8f5cbdfd523888823e546fa1
+      size: 11140
+    - path: sql/05_modeling_tables.sql
+      hash: md5
+      md5: 82451d63f54c0149c2188dab713977bb
+      size: 10199
+    - path: src/config.py
+      hash: md5
+      md5: 124d670c0218ff41c9d7d79c44ec9cf8
+      size: 1197
+    - path: src/db.py
+      hash: md5
+      md5: 01f290fabe47ac3e369215200ae88214
+      size: 4928
+    - path: src/extract.py
+      hash: md5
+      md5: f6bf4780009018e38ff25d5294c19125
+      size: 9051
+    params:
+      params.yaml:
+        common.analysis_end: '2018-08-31'
+        common.analysis_start: '2017-01-01'
+        common.valid_statuses:
+        - delivered
+        extraction:
+          read_chunksize: 50000
+          categorical_min_unique: 20
+          categorical_max_unique: 1000
+          categorical_row_fraction: 0.02
+    outs:
+    - path: data/processed/customer_orders.parquet
+      hash: md5
+      md5: b95d8ccb6523af2f8825cf6a8a4c5a94
+      size: 7927755
+    - path: data/processed/interactions.parquet
+      hash: md5
+      md5: 490081b65f38ed171347202df6aceab4
+      size: 8793188
+    - path: data/processed/manifest.json
+      hash: md5
+      md5: 9eaa4ee274db7ba05957cab7f6623bbe
+      size: 9448
+    - path: data/processed/orders_enriched.parquet
+      hash: md5
+      md5: fd984152b5910a5ecb3305b78b8194a9
+      size: 14981179
+    - path: data/processed/products_enriched.parquet
+      hash: md5
+      md5: 2f6956e804a21f8ea18fcac8c7e03ca2
+      size: 2316806
+    - path: data/processed/reviews_clean.parquet
+      hash: md5
+      md5: 9b7e3119aad99694344442b22009953a
+      size: 16849932
+  clean:
+    cmd: python -m src.cleaning run
+    deps:
+    - path: data/processed/customer_orders.parquet
+      hash: md5
+      md5: b95d8ccb6523af2f8825cf6a8a4c5a94
+      size: 7927755
+    - path: data/processed/interactions.parquet
+      hash: md5
+      md5: 490081b65f38ed171347202df6aceab4
+      size: 8793188
+    - path: data/processed/orders_enriched.parquet
+      hash: md5
+      md5: fd984152b5910a5ecb3305b78b8194a9
+      size: 14981179
+    - path: data/processed/products_enriched.parquet
+      hash: md5
+      md5: 2f6956e804a21f8ea18fcac8c7e03ca2
+      size: 2316806
+    - path: data/processed/reviews_clean.parquet
+      hash: md5
+      md5: 9b7e3119aad99694344442b22009953a
+      size: 16849932
+    - path: data/raw/olist_products_dataset.csv
+      hash: md5
+      md5: e935401104a3669223b83c9a01fdf5ca
+      size: 2379446
+    - path: params.yaml
+      hash: md5
+      md5: fb5a0a3d54ff8ff8d94f2fe7049101f2
+      size: 1211
+    - path: src/cleaning.py
+      hash: md5
+      md5: 09852f282b5091adfbf41337a0d6de7c
+      size: 12634
+    - path: src/config.py
+      hash: md5
+      md5: 124d670c0218ff41c9d7d79c44ec9cf8
+      size: 1197
+    - path: src/extract.py
+      hash: md5
+      md5: f6bf4780009018e38ff25d5294c19125
+      size: 9051
+    - path: src/validation.py
+      hash: md5
+      md5: 2b152c3ea4d7d85c6f57d033cde1b4c5
+      size: 20279
+    params:
+      params.yaml:
+        cleaning:
+          winsor_lower: 0.01
+          winsor_upper: 0.99
+          minimum_valid_item_price: 0
+        common.analysis_end: '2018-08-31'
+        common.analysis_start: '2017-01-01'
+        extraction:
+          read_chunksize: 50000
+          categorical_min_unique: 20
+          categorical_max_unique: 1000
+          categorical_row_fraction: 0.02
+        validation:
+          soft_null_rate_limit: 0.05
+          row_count_tolerance_pct: 5.0
+          unusual_category_min_count: 5
+          nonnegative_minimum: 0
+          minimum_count: 1
+          probability_min: 0
+          probability_max: 1
+          review_score_min: 1
+          review_score_max: 5
+    outs:
+    - path: data/processed/clean
+      hash: md5
+      md5: c22dd5e565b3dd7856a012325341b9f3.dir
+      size: 51239764
+      nfiles: 5
+  validate:
+    cmd: python -m src.validation run
+    deps:
+    - path: data/processed/clean
+      hash: md5
+      md5: c22dd5e565b3dd7856a012325341b9f3.dir
+      size: 51239764
+      nfiles: 5
+    - path: data/processed/customer_orders.parquet
+      hash: md5
+      md5: b95d8ccb6523af2f8825cf6a8a4c5a94
+      size: 7927755
+    - path: data/processed/interactions.parquet
+      hash: md5
+      md5: 490081b65f38ed171347202df6aceab4
+      size: 8793188
+    - path: data/processed/manifest.json
+      hash: md5
+      md5: 9eaa4ee274db7ba05957cab7f6623bbe
+      size: 9448
+    - path: data/processed/orders_enriched.parquet
+      hash: md5
+      md5: fd984152b5910a5ecb3305b78b8194a9
+      size: 14981179
+    - path: data/processed/products_enriched.parquet
+      hash: md5
+      md5: 2f6956e804a21f8ea18fcac8c7e03ca2
+      size: 2316806
+    - path: data/processed/reviews_clean.parquet
+      hash: md5
+      md5: 9b7e3119aad99694344442b22009953a
+      size: 16849932
+    - path: params.yaml
+      hash: md5
+      md5: fb5a0a3d54ff8ff8d94f2fe7049101f2
+      size: 1211
+    - path: src/config.py
+      hash: md5
+      md5: 124d670c0218ff41c9d7d79c44ec9cf8
+      size: 1197
+    - path: src/validation.py
+      hash: md5
+      md5: 2b152c3ea4d7d85c6f57d033cde1b4c5
+      size: 20279
+    params:
+      params.yaml:
+        common.analysis_end: '2018-08-31'
+        common.analysis_start: '2017-01-01'
+        validation:
+          soft_null_rate_limit: 0.05
+          row_count_tolerance_pct: 5.0
+          unusual_category_min_count: 5
+          nonnegative_minimum: 0
+          minimum_count: 1
+          probability_min: 0
+          probability_max: 1
+          review_score_min: 1
+          review_score_max: 5
+    outs:
+    - path: docs/validation_report.md
+      hash: md5
+      md5: 9a7d5833432ebb08356e932a20ac5471
+      size: 2012
+    - path: metrics/validation.json
+      hash: md5
+      md5: 169454af4d0195a4627a16a14556e9f3
+      size: 3372

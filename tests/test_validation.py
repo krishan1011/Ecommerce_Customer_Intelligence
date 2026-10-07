@@ -132,20 +132,20 @@ def test_schemas_reject_duplicate_grain_null_customer_bad_rating_and_negative_pr
     frames = _valid_frames()
 
     duplicate = pd.concat([frames["orders_enriched"]] * 2, ignore_index=True)
-    with pytest.raises(pa.errors.SchemaError):
+    with pytest.raises(pa.errors.SchemaErrors):
         validate_frame("orders_enriched", duplicate)
 
     null_customer = frames["interactions"].copy()
     null_customer.loc[0, "customer_unique_id"] = pd.NA
-    with pytest.raises(pa.errors.SchemaError):
+    with pytest.raises(pa.errors.SchemaErrors):
         validate_frame("interactions", null_customer)
 
     bad_score = frames["reviews_clean"].copy()
     bad_score.loc[0, "review_score"] = 6
-    with pytest.raises(pa.errors.SchemaError):
+    with pytest.raises(pa.errors.SchemaErrors):
         validate_frame("reviews_clean", bad_score)
 
     negative_price = frames["orders_enriched"].copy()
     negative_price.loc[0, "price"] = -0.01
-    with pytest.raises(pa.errors.SchemaError):
+    with pytest.raises(pa.errors.SchemaErrors):
         validate_frame("orders_enriched", negative_price)

@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 from sqlalchemy import text
 
-from .config import DATA_PROCESSED, SQL_DIR
+from .config import DATA_PROCESSED, EXTRACTION_PARAMS, SQL_DIR
 
 TABLES = {
     "orders_enriched": {
@@ -110,7 +110,12 @@ def _git_commit(root: Path) -> str:
         return "unknown"
 
 
-def _read_view(engine, view_name: str, order_by: str, chunksize: int = 50_000) -> pd.DataFrame:
+def _read_view(
+    engine,
+    view_name: str,
+    order_by: str,
+    chunksize: int = EXTRACTION_PARAMS["read_chunksize"],
+) -> pd.DataFrame:
     query = text(f"SELECT * FROM analytics.{view_name} ORDER BY {order_by}")
     with engine.connect() as conn:
         chunks = list(pd.read_sql(query, conn, chunksize=chunksize))
@@ -140,7 +145,13 @@ def _normalize_dtypes(frame: pd.DataFrame) -> pd.DataFrame:
 
     for column in frame.select_dtypes(include=["string"]).columns:
         cardinality = frame[column].nunique(dropna=True)
-        threshold = max(20, min(1_000, int(len(frame) * 0.02)))
+        threshold = max(
+            EXTRACTION_PARAMS["categorical_min_unique"],
+            min(
+                EXTRACTION_PARAMS["categorical_max_unique"],
+                int(len(frame) * EXTRACTION_PARAMS["categorical_row_fraction"]),
+            ),
+        )
         if cardinality <= threshold:
             frame[column] = frame[column].astype("category")
     return frame

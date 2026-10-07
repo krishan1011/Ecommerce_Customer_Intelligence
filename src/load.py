@@ -8,8 +8,9 @@ from pathlib import Path
 
 import pandas as pd
 from sqlalchemy import text
+from sqlalchemy.exc import InterfaceError, OperationalError
 
-from .config import DATA_RAW, DOCS_DIR
+from .config import DATA_RAW, DOCS_DIR, LOAD_PARAMS
 from .db import get_engine
 
 RAW_FILES = {
@@ -767,8 +768,71 @@ def sanity_report(write_report: bool = True):
     return {"sql": sql_values, "pandas": pandas_values, "core_rows": core_counts}
 
 
+def _load_attempt(engine, run_ts, csv_counts):
+    """Run a complete transactional raw COPY and core rebuild attempt."""
+    raw_tables = ", ".join(f"raw.{table}" for table in RAW_FILES)
+    core_tables = ", ".join(f"core.{table}" for table in CORE_TRUNCATE_ORDER)
+    with engine.begin() as conn:
+        conn.execute(text(f"TRUNCATE TABLE {raw_tables} RESTART IDENTITY"))
+        conn.execute(text(f"TRUNCATE TABLE {core_tables}"))
+
+        dbapi_connection = conn.connection.driver_connection
+        with dbapi_connection.cursor() as cursor:
+            for table, filename in RAW_FILES.items():
+                copy_sql = f"COPY raw.{table} FROM STDIN WITH CSV HEADER ENCODING 'UTF8'"
+                csv_path = DATA_RAW / filename
+                with csv_path.open("r", encoding="utf-8-sig", newline="") as csv_stream:
+                    cursor.copy_expert(copy_sql, csv_stream)
+
+        raw_counts = {
+            table: conn.execute(text(f"SELECT COUNT(*) FROM raw.{table}")).scalar_one()
+            for table in RAW_FILES
+        }
+        mismatches = {
+            table: (csv_counts[table], raw_counts[table])
+            for table in RAW_FILES
+            if csv_counts[table] != raw_counts[table]
+        }
+        if mismatches:
+            raise RuntimeError(f"CSV/COPY row-count reconciliation failed: {mismatches}")
+
+        _load_core(conn, run_ts, csv_counts, raw_counts)
+    return sanity_report()
+
+
+def _transient_database_error(error: Exception) -> bool:
+    """Detect connection shutdowns in the exception chain without retrying data errors."""
+    pending = [error]
+    seen = set()
+    markers = (
+        "adminshutdown",
+        "terminating connection",
+        "unexpected eof",
+        "server closed the connection",
+        "connection reset by peer",
+        "ssl syscall",
+    )
+    while pending:
+        current = pending.pop()
+        if id(current) in seen:
+            continue
+        seen.add(id(current))
+        if any(marker in str(current).lower() for marker in markers):
+            return True
+        if current.__class__.__name__ == "AdminShutdown":
+            return True
+        for chained in (
+            getattr(current, "orig", None),
+            getattr(current, "__cause__", None),
+            getattr(current, "__context__", None),
+        ):
+            if chained is not None:
+                pending.append(chained)
+    return isinstance(error, (OperationalError, InterfaceError))
+
+
 def load_data():
-    """Copy all source CSVs and rebuild the typed core tables in one transaction."""
+    """Copy source CSVs and rebuild core tables, retrying transient connection shutdowns."""
     started = time.perf_counter()
     missing = [filename for filename in RAW_FILES.values() if not (DATA_RAW / filename).is_file()]
     if missing:
@@ -779,38 +843,21 @@ def load_data():
     }
     run_ts = datetime.now(timezone.utc)
     engine = get_engine()
-
-    raw_tables = ", ".join(f"raw.{table}" for table in RAW_FILES)
-    core_tables = ", ".join(f"core.{table}" for table in CORE_TRUNCATE_ORDER)
     try:
-        with engine.begin() as conn:
-            conn.execute(text(f"TRUNCATE TABLE {raw_tables} RESTART IDENTITY"))
-            conn.execute(text(f"TRUNCATE TABLE {core_tables}"))
-
-            dbapi_connection = conn.connection.driver_connection
-            with dbapi_connection.cursor() as cursor:
-                for table, filename in RAW_FILES.items():
-                    copy_sql = f"COPY raw.{table} FROM STDIN WITH CSV HEADER ENCODING 'UTF8'"
-                    with (DATA_RAW / filename).open(
-                        "r", encoding="utf-8-sig", newline=""
-                    ) as csv_stream:
-                        cursor.copy_expert(copy_sql, csv_stream)
-
-            raw_counts = {
-                table: conn.execute(text(f"SELECT COUNT(*) FROM raw.{table}")).scalar_one()
-                for table in RAW_FILES
-            }
-            mismatches = {
-                table: (csv_counts[table], raw_counts[table])
-                for table in RAW_FILES
-                if csv_counts[table] != raw_counts[table]
-            }
-            if mismatches:
-                raise RuntimeError(f"CSV/COPY row-count reconciliation failed: {mismatches}")
-
-            _load_core(conn, run_ts, csv_counts, raw_counts)
-
-        summary = sanity_report()
+        for attempt in range(1, LOAD_PARAMS["retry_attempts"] + 1):
+            try:
+                summary = _load_attempt(engine, run_ts, csv_counts)
+                break
+            except (OperationalError, InterfaceError) as error:
+                if attempt >= LOAD_PARAMS["retry_attempts"] or not _transient_database_error(error):
+                    raise
+                delay = LOAD_PARAMS["retry_backoff_seconds"] * (2 ** (attempt - 1))
+                print(
+                    "Transient database connection shutdown; "
+                    f"retrying load attempt {attempt + 1} after {delay} second(s)."
+                )
+                engine.dispose()
+                time.sleep(delay)
     except Exception:
         duration = time.perf_counter() - started
         print(f"Load failed after {duration:.2f} seconds.")
