@@ -1,4 +1,4 @@
-.PHONY: setup db-up db-down test lint schema views all load-db extract validate features train-churn segment-clv forecast train-delay train-recsys train-nlp train-dl evaluate monitor export-bi
+.PHONY: setup db-up db-down test lint schema views all load-db extract validate clean features train-churn segment-clv forecast train-delay train-recsys train-nlp train-dl evaluate monitor export-bi
 setup:
 	python -m venv .venv
 	.venv/bin/pip install -r requirements.txt
@@ -20,6 +20,7 @@ all: load-db extract validate features train-churn segment-clv forecast train-de
 load-db:      ; python -m src.db load
 extract:      ; python -m src.db extract
 validate:     ; python -m src.validation run
+clean:        ; python -m src.cleaning run
 features:     ; python -m src.features build
 train-churn:  ; python -m src.churn train
 segment-clv:  ; python -m src.segmentation run && python -m src.clv run

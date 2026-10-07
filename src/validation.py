@@ -15,6 +15,13 @@ TABLE_FILES = {
     "products_enriched": "products_enriched.parquet",
     "reviews_clean": "reviews_clean.parquet",
 }
+CLEAN_TABLE_FILES = {
+    "orders_clean": "orders_clean.parquet",
+    "customers_clean": "customers_clean.parquet",
+    "interactions_clean": "interactions_clean.parquet",
+    "products_clean": "products_clean.parquet",
+    "reviews_clean": "reviews_clean.parquet",
+}
 
 
 def _window_checks():
@@ -203,6 +210,95 @@ def validate_all(directory: Path = DATA_PROCESSED) -> dict[str, int]:
         counts[name] = len(frame)
         print(f"{name}: VALID ({len(frame):,} rows)")
     print("All modeling parquet tables passed Pandera validation.")
+    return counts
+
+
+def get_clean_schemas() -> dict[str, pa.DataFrameSchema]:
+    """Schemas for Phase 6 outputs; extra source and quality columns are retained."""
+    nonnegative = pa.Check.ge(0)
+    return {
+        "orders_clean": pa.DataFrameSchema(
+            {
+                "order_id": _string(),
+                "order_item_id": _integer(checks=nonnegative),
+                "customer_unique_id": _string(),
+                "price": _float(checks=nonnegative),
+                "purchase_ts": _timestamp(in_window=True),
+                "price_nonpositive": _boolean(),
+                "freight_exceeds_price": _boolean(),
+                "delivered_before_purchase": _boolean(),
+                "approved_before_purchase": _boolean(),
+                "estimated_before_purchase": _boolean(),
+                "missing_delivery_ts_on_delivered": _boolean(),
+            },
+            checks=[_grain_check(["order_id", "order_item_id"])],
+            strict=False,
+            name="orders_clean",
+        ),
+        "customers_clean": pa.DataFrameSchema(
+            {
+                "customer_unique_id": _string(),
+                "order_id": _string(),
+                "purchase_ts": _timestamp(in_window=True),
+                "item_revenue": _float(checks=nonnegative),
+            },
+            checks=[_grain_check(["customer_unique_id", "order_id"])],
+            strict=False,
+            name="customers_clean",
+        ),
+        "interactions_clean": pa.DataFrameSchema(
+            {
+                "customer_unique_id": _string(),
+                "product_id": _string(),
+                "order_id": _string(),
+                "purchase_ts": _timestamp(in_window=True),
+                "price": _float(checks=nonnegative),
+            },
+            checks=[_grain_check(["customer_unique_id", "product_id", "order_id"])],
+            strict=False,
+            name="interactions_clean",
+        ),
+        "products_clean": pa.DataFrameSchema(
+            {
+                "product_id": _string(),
+                "weight_g": _float(nullable=True, checks=nonnegative),
+                "volume_cm3": _float(nullable=True, checks=nonnegative),
+                "name_length_missing": _boolean(),
+                "description_length_missing": _boolean(),
+                "photos_qty_missing": _boolean(),
+                "weight_g_missing": _boolean(),
+            },
+            checks=[_grain_check(["product_id"])],
+            strict=False,
+            name="products_clean",
+        ),
+        "reviews_clean": pa.DataFrameSchema(
+            {
+                "review_id": _string(),
+                "order_id": _string(),
+                "customer_unique_id": _string(),
+                "review_score": _integer(checks=pa.Check.in_range(1, 5)),
+                "order_purchase_ts": _timestamp(in_window=True),
+            },
+            checks=[_grain_check(["order_id"])],
+            strict=False,
+            name="reviews_clean",
+        ),
+    }
+
+
+def validate_clean_tables(directory: Path = DATA_PROCESSED / "clean") -> dict[str, int]:
+    """Validate every Phase 6 clean parquet file and return row counts."""
+    schemas = get_clean_schemas()
+    counts = {}
+    for name, filename in CLEAN_TABLE_FILES.items():
+        path = directory / filename
+        if not path.is_file():
+            raise FileNotFoundError(f"Required clean parquet table is missing: {path}")
+        frame = pd.read_parquet(path)
+        schemas[name].validate(frame)
+        counts[name] = len(frame)
+        print(f"{name}: VALID ({len(frame):,} rows)")
     return counts
 
 
