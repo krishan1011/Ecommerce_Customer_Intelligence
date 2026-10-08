@@ -15,6 +15,11 @@ def _path_exists(root: dict, dotted_path: str) -> bool:
 def test_dvc_stages_have_commands_dependencies_and_valid_params():
     pipeline = yaml.safe_load((ROOT / "dvc.yaml").read_text(encoding="utf-8"))
     assert pipeline["stages"]
+    assert "features" in pipeline["stages"]
+    assert "data/processed/features" in pipeline["stages"]["features"]["outs"]
+    assert any(
+        "metrics/features.json" in metric for metric in pipeline["stages"]["features"]["metrics"]
+    )
     for stage_name, stage in pipeline["stages"].items():
         assert stage.get("cmd"), f"{stage_name} is missing cmd"
         assert stage.get("deps"), f"{stage_name} is missing deps"

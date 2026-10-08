@@ -7,8 +7,11 @@ common:
   valid_statuses: ["delivered"]  # confirmed in Phase 1
 
 features:
-  horizon_days: 120              # H, reviewed in Phase 8
-  snapshots: ["2017-12-31", "2018-02-28", "2018-04-30"]
+  horizon_days: 90
+  snapshots:
+    train: ["2017-05-31", "2017-08-31"]
+    val: ["2017-12-31"]
+    test: ["2018-04-30"]
 
 churn:
   threshold: null                # chosen on validation in Phase 9
@@ -42,6 +45,7 @@ validation:
   probability_max: 1
   review_score_min: 1
   review_score_max: 5
+  positive_rate_drift_ratio_limit: 3.0
 
 dvc:
   remote_name: "storage"

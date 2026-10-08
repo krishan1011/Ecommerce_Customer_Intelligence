@@ -37,6 +37,11 @@ TABLES = {
         "timestamp": "creation_ts",
         "order_by": "review_id, order_id",
     },
+    "order_geo": {
+        "view": "model_order_geo",
+        "timestamp": "purchase_ts",
+        "order_by": "order_id",
+    },
 }
 
 INTEGER_COLUMNS = {
@@ -67,6 +72,10 @@ FLOAT64_COLUMNS = {
     "price_max",
     "review_avg",
     "share_low_score",
+    "customer_lat",
+    "customer_lng",
+    "seller_lat",
+    "seller_lng",
 }
 STRING_COLUMNS = {
     "order_id",
@@ -80,6 +89,7 @@ STRING_COLUMNS = {
     "order_status",
     "payment_type_main",
     "state",
+    "customer_city",
     "title",
     "message",
     "review_text",
@@ -98,7 +108,13 @@ DATETIME_COLUMNS = {
     "answer_ts",
     "order_purchase_ts",
 }
-BOOLEAN_COLUMNS = {"is_delivered", "is_late", "has_text", "single_product_order"}
+BOOLEAN_COLUMNS = {
+    "is_delivered",
+    "is_late",
+    "has_text",
+    "single_product_order",
+    "same_state",
+}
 
 
 def _git_commit(root: Path) -> str:

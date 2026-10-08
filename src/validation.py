@@ -25,6 +25,7 @@ TABLE_FILES = {
     "interactions": "interactions.parquet",
     "products_enriched": "products_enriched.parquet",
     "reviews_clean": "reviews_clean.parquet",
+    "order_geo": "order_geo.parquet",
 }
 CLEAN_TABLE_FILES = {
     "orders_clean": "orders_clean.parquet",
@@ -206,6 +207,24 @@ def get_schemas() -> dict[str, pa.DataFrameSchema]:
             strict=True,
             name="reviews_clean",
         ),
+        "order_geo": pa.DataFrameSchema(
+            {
+                "order_id": _string(),
+                "customer_unique_id": _string(),
+                "purchase_ts": _timestamp(in_window=True),
+                "customer_city": _string(nullable=True),
+                "customer_lat": _float(nullable=True),
+                "customer_lng": _float(nullable=True),
+                "seller_lat": _float(nullable=True),
+                "seller_lng": _float(nullable=True),
+                "customer_state": _category(nullable=True),
+                "seller_state": _category(nullable=True),
+                "same_state": _boolean(nullable=True),
+            },
+            checks=[_grain_check(["order_id"])],
+            strict=True,
+            name="order_geo",
+        ),
     }
 
 
@@ -291,6 +310,40 @@ def get_clean_schemas() -> dict[str, pa.DataFrameSchema]:
     }
 
 
+def get_feature_schemas() -> dict[str, pa.DataFrameSchema]:
+    """Hard schemas for Phase 8 customer snapshots and product features."""
+    nonnegative = pa.Check.ge(VALIDATION_PARAMS["nonnegative_minimum"])
+    return {
+        "customer_features": pa.DataFrameSchema(
+            {
+                "customer_unique_id": _string(),
+                "snapshot": _timestamp(),
+                "label_repeat": _integer(checks=pa.Check.isin([0, 1])),
+                "recency_days": _float(checks=nonnegative),
+                "frequency": _integer(checks=pa.Check.ge(1)),
+            },
+            checks=[_grain_check(["customer_unique_id", "snapshot"])],
+            strict=False,
+            name="customer_features",
+        ),
+        "product_features": pa.DataFrameSchema(
+            {
+                "product_id": _string(),
+                "units_sold": _integer(checks=pa.Check.ge(1)),
+                "weight_g": _float(nullable=True, checks=nonnegative),
+                "volume_cm3": _float(nullable=True, checks=nonnegative),
+                "photos_qty_missing": _boolean(),
+                "description_length_missing": _boolean(),
+                "weight_g_missing": _boolean(),
+                "volume_cm3_missing": _boolean(),
+            },
+            checks=[_grain_check(["product_id"])],
+            strict=False,
+            name="product_features",
+        ),
+    }
+
+
 class TableValidationError(ValueError):
     """Raised when a table violates one or more hard schema checks."""
 
@@ -301,6 +354,9 @@ def _schema_for(table_name: str) -> pa.DataFrameSchema:
     clean_schemas = get_clean_schemas()
     if table_name in clean_schemas:
         return clean_schemas[table_name]
+    feature_schemas = get_feature_schemas()
+    if table_name in feature_schemas:
+        return feature_schemas[table_name]
     raise KeyError(f"Unknown validation table: {table_name}")
 
 

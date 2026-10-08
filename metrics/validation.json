@@ -55,6 +55,16 @@
       "status": "WARN"
     },
     {
+      "table": "order_geo",
+      "rows": 99092,
+      "hard_failures": 0,
+      "hard_failure_details": [],
+      "soft_warnings": [
+        "seller_state: 1 category value(s) occur fewer than 5 rows"
+      ],
+      "status": "WARN"
+    },
+    {
       "table": "clean/orders_clean",
       "rows": 112279,
       "hard_failures": 0,
@@ -110,5 +120,5 @@
     }
   ],
   "hard_failure_count": 0,
-  "soft_warning_count": 20
+  "soft_warning_count": 21
 }

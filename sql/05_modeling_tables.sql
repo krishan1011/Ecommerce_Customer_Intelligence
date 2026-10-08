@@ -249,3 +249,45 @@ LEFT JOIN product_reviews AS pr ON pr.product_id = p.product_id;
 
 COMMENT ON VIEW analytics.model_products_enriched IS
     'Grain: one product; sales use configured valid orders and product sentiment includes only single_product_order reviews.';
+
+-- Grain: one order with customer coordinates and the first-item seller's
+-- coordinates. Geolocation is averaged by ZIP prefix for deterministic joins.
+CREATE OR REPLACE VIEW analytics.model_order_geo AS
+WITH geo_by_zip AS (
+    SELECT
+        zip_prefix,
+        AVG(lat)::DOUBLE PRECISION AS lat,
+        AVG(lng)::DOUBLE PRECISION AS lng,
+        MIN(city) AS city,
+        MIN(state) AS state
+    FROM core.geolocation
+    GROUP BY zip_prefix
+), primary_seller AS (
+    SELECT DISTINCT ON (order_id) order_id, seller_id
+    FROM core.order_items
+    ORDER BY order_id, order_item_id, seller_id
+)
+SELECT
+    o.order_id,
+    c.customer_unique_id,
+    o.purchase_ts,
+    COALESCE(c.city, cg.city) AS customer_city,
+    cg.lat AS customer_lat,
+    cg.lng AS customer_lng,
+    sg.lat AS seller_lat,
+    sg.lng AS seller_lng,
+    COALESCE(c.state, cg.state) AS customer_state,
+    COALESCE(s.state, sg.state) AS seller_state,
+    COALESCE(c.state, cg.state) = COALESCE(s.state, sg.state) AS same_state
+FROM core.orders AS o
+JOIN core.customers AS c ON c.customer_id = o.customer_id
+ CROSS JOIN analytics.config AS cfg
+LEFT JOIN geo_by_zip AS cg ON cg.zip_prefix = c.zip_prefix
+LEFT JOIN primary_seller AS ps ON ps.order_id = o.order_id
+LEFT JOIN core.sellers AS s ON s.seller_id = ps.seller_id
+LEFT JOIN geo_by_zip AS sg ON sg.zip_prefix = s.zip_prefix
+WHERE o.purchase_ts >= cfg.analysis_start::TIMESTAMP
+  AND o.purchase_ts < (cfg.analysis_end + 1)::TIMESTAMP;
+
+COMMENT ON VIEW analytics.model_order_geo IS
+    'Grain: one order; customer and first-item seller coordinates are ZIP-prefix averages.';

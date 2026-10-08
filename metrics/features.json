@@ -1,0 +1,97 @@
+{
+  "splits": {
+    "train": {
+      "rows": 31705,
+      "positives": 289,
+      "positive_rate": 0.009115281501340482,
+      "snapshots": [
+        "2017-05-31",
+        "2017-08-31"
+      ]
+    },
+    "val": {
+      "rows": 42066,
+      "positives": 303,
+      "positive_rate": 0.0072029667665097705,
+      "snapshots": [
+        "2017-12-31"
+      ]
+    },
+    "test": {
+      "rows": 68397,
+      "positives": 427,
+      "positive_rate": 0.006242963872684475,
+      "snapshots": [
+        "2018-04-30"
+      ]
+    }
+  },
+  "products": {
+    "rows": 9499
+  },
+  "validation": {
+    "train": {
+      "table": "customer_features",
+      "rows": 31705,
+      "hard_failures": 0,
+      "hard_failure_details": [],
+      "soft_warnings": [
+        "avg_days_between_orders: null rate 97.62% exceeds configured 5.00%",
+        "avg_review_score: null rate 9.36% exceeds configured 5.00%",
+        "last_review_score: null rate 9.36% exceeds configured 5.00%",
+        "min_review_score: null rate 9.36% exceeds configured 5.00%",
+        "avg_review_text_length: null rate 61.90% exceeds configured 5.00%",
+        "late_delivery_share: null rate 8.02% exceeds configured 5.00%",
+        "last_order_late: null rate 8.19% exceeds configured 5.00%",
+        "avg_delivery_days: null rate 8.02% exceeds configured 5.00%",
+        "avg_delay_vs_estimate: null rate 8.02% exceeds configured 5.00%",
+        "top_category: 11 category value(s) occur fewer than 5 rows"
+      ],
+      "status": "WARN"
+    },
+    "val": {
+      "table": "customer_features",
+      "rows": 42066,
+      "hard_failures": 0,
+      "hard_failure_details": [],
+      "soft_warnings": [
+        "avg_days_between_orders: null rate 97.22% exceeds configured 5.00%",
+        "avg_review_score: null rate 5.84% exceeds configured 5.00%",
+        "last_review_score: null rate 5.84% exceeds configured 5.00%",
+        "min_review_score: null rate 5.84% exceeds configured 5.00%",
+        "avg_review_text_length: null rate 61.12% exceeds configured 5.00%",
+        "late_delivery_share: null rate 5.62% exceeds configured 5.00%",
+        "last_order_late: null rate 5.73% exceeds configured 5.00%",
+        "avg_delivery_days: null rate 5.62% exceeds configured 5.00%",
+        "avg_delay_vs_estimate: null rate 5.62% exceeds configured 5.00%",
+        "top_category: 7 category value(s) occur fewer than 5 rows"
+      ],
+      "status": "WARN"
+    },
+    "test": {
+      "table": "customer_features",
+      "rows": 68397,
+      "hard_failures": 0,
+      "hard_failure_details": [],
+      "soft_warnings": [
+        "avg_days_between_orders: null rate 97.08% exceeds configured 5.00%",
+        "avg_review_text_length: null rate 60.17% exceeds configured 5.00%",
+        "top_category: 4 category value(s) occur fewer than 5 rows"
+      ],
+      "status": "WARN"
+    },
+    "products": {
+      "table": "product_features",
+      "rows": 9499,
+      "hard_failures": 0,
+      "hard_failure_details": [],
+      "soft_warnings": [
+        "review_avg: null rate 14.60% exceeds configured 5.00%",
+        "share_low_score: null rate 14.60% exceeds configured 5.00%",
+        "category_en: 14 category value(s) occur fewer than 5 rows"
+      ],
+      "status": "WARN"
+    }
+  },
+  "warnings": []
+}

@@ -20,6 +20,7 @@ stages:
       - data/processed/interactions.parquet
       - data/processed/products_enriched.parquet
       - data/processed/reviews_clean.parquet
+      - data/processed/order_geo.parquet
       - data/processed/manifest.json
     always_changed: false
 
@@ -58,6 +59,7 @@ stages:
       - data/processed/interactions.parquet
       - data/processed/products_enriched.parquet
       - data/processed/reviews_clean.parquet
+      - data/processed/order_geo.parquet
       - data/processed/clean
     params:
       - common.analysis_start
@@ -69,10 +71,33 @@ stages:
     outs:
       - docs/validation_report.md
 
+  features:
+    cmd: python -m src.features build
+    deps:
+      - params.yaml
+      - src/config.py
+      - src/features.py
+      - src/validation.py
+      - src/tracking.py
+      - data/processed/orders_enriched.parquet
+      - data/processed/interactions.parquet
+      - data/processed/reviews_clean.parquet
+      - data/processed/order_geo.parquet
+      - data/processed/products_enriched.parquet
+      - data/processed/manifest.json
+      - data/processed/clean
+    params:
+      - common.analysis_end
+      - features.horizon_days
+      - features.snapshots
+      - validation.positive_rate_drift_ratio_limit
+    outs:
+      - data/processed/features
+    metrics:
+      - metrics/features.json:
+          cache: false
+
 # Later phases:
-# features:
-#   cmd: python -m src.features build
-#   deps: [src/features.py, data/processed/clean]
 # train_churn:
 #   cmd: python -m src.churn train
 #   deps: [src/churn.py, data/processed/clean]

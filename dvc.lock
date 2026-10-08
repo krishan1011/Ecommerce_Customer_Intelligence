@@ -5,8 +5,8 @@ stages:
     deps:
     - path: params.yaml
       hash: md5
-      md5: fb5a0a3d54ff8ff8d94f2fe7049101f2
-      size: 1211
+      md5: f417809c071d3fb6f4c896cd3cd14f96
+      size: 1257
     - path: sql/03_clean_views.sql
       hash: md5
       md5: 8a62ae1d6195c6b8ec60f84fad210321
@@ -17,20 +17,20 @@ stages:
       size: 11140
     - path: sql/05_modeling_tables.sql
       hash: md5
-      md5: 82451d63f54c0149c2188dab713977bb
-      size: 10199
+      md5: e81c9d3162ba682997c300c823253da6
+      size: 11801
     - path: src/config.py
       hash: md5
-      md5: 124d670c0218ff41c9d7d79c44ec9cf8
-      size: 1197
+      md5: bf8834bbd3260a4d903025f26ee8c340
+      size: 1234
     - path: src/db.py
       hash: md5
       md5: 01f290fabe47ac3e369215200ae88214
       size: 4928
     - path: src/extract.py
       hash: md5
-      md5: f6bf4780009018e38ff25d5294c19125
-      size: 9051
+      md5: 7772ab383abcdbccad4b7a978e51df2d
+      size: 9314
     params:
       params.yaml:
         common.analysis_end: '2018-08-31'
@@ -53,8 +53,12 @@ stages:
       size: 8793188
     - path: data/processed/manifest.json
       hash: md5
-      md5: 9eaa4ee274db7ba05957cab7f6623bbe
-      size: 9448
+      md5: 01001300fd7e3053230c4da5b31cb6bf
+      size: 10978
+    - path: data/processed/order_geo.parquet
+      hash: md5
+      md5: a5fa3a2c15ae7554e5b97e43970f8a7a
+      size: 8489949
     - path: data/processed/orders_enriched.parquet
       hash: md5
       md5: fd984152b5910a5ecb3305b78b8194a9
@@ -96,24 +100,24 @@ stages:
       size: 2379446
     - path: params.yaml
       hash: md5
-      md5: fb5a0a3d54ff8ff8d94f2fe7049101f2
-      size: 1211
+      md5: f417809c071d3fb6f4c896cd3cd14f96
+      size: 1257
     - path: src/cleaning.py
       hash: md5
       md5: 09852f282b5091adfbf41337a0d6de7c
       size: 12634
     - path: src/config.py
       hash: md5
-      md5: 124d670c0218ff41c9d7d79c44ec9cf8
-      size: 1197
+      md5: bf8834bbd3260a4d903025f26ee8c340
+      size: 1234
     - path: src/extract.py
       hash: md5
-      md5: f6bf4780009018e38ff25d5294c19125
-      size: 9051
+      md5: 7772ab383abcdbccad4b7a978e51df2d
+      size: 9314
     - path: src/validation.py
       hash: md5
-      md5: 2b152c3ea4d7d85c6f57d033cde1b4c5
-      size: 20279
+      md5: 45c66a5989d163ad5bf44ded06cc1659
+      size: 22614
     params:
       params.yaml:
         cleaning:
@@ -137,6 +141,7 @@ stages:
           probability_max: 1
           review_score_min: 1
           review_score_max: 5
+          positive_rate_drift_ratio_limit: 3.0
     outs:
     - path: data/processed/clean
       hash: md5
@@ -161,8 +166,12 @@ stages:
       size: 8793188
     - path: data/processed/manifest.json
       hash: md5
-      md5: 9eaa4ee274db7ba05957cab7f6623bbe
-      size: 9448
+      md5: 01001300fd7e3053230c4da5b31cb6bf
+      size: 10978
+    - path: data/processed/order_geo.parquet
+      hash: md5
+      md5: a5fa3a2c15ae7554e5b97e43970f8a7a
+      size: 8489949
     - path: data/processed/orders_enriched.parquet
       hash: md5
       md5: fd984152b5910a5ecb3305b78b8194a9
@@ -177,16 +186,16 @@ stages:
       size: 16849932
     - path: params.yaml
       hash: md5
-      md5: fb5a0a3d54ff8ff8d94f2fe7049101f2
-      size: 1211
+      md5: f417809c071d3fb6f4c896cd3cd14f96
+      size: 1257
     - path: src/config.py
       hash: md5
-      md5: 124d670c0218ff41c9d7d79c44ec9cf8
-      size: 1197
+      md5: bf8834bbd3260a4d903025f26ee8c340
+      size: 1234
     - path: src/validation.py
       hash: md5
-      md5: 2b152c3ea4d7d85c6f57d033cde1b4c5
-      size: 20279
+      md5: 45c66a5989d163ad5bf44ded06cc1659
+      size: 22614
     params:
       params.yaml:
         common.analysis_end: '2018-08-31'
@@ -201,12 +210,88 @@ stages:
           probability_max: 1
           review_score_min: 1
           review_score_max: 5
+          positive_rate_drift_ratio_limit: 3.0
     outs:
     - path: docs/validation_report.md
       hash: md5
-      md5: 9a7d5833432ebb08356e932a20ac5471
-      size: 2012
+      md5: a77fecbde95caf9b5ddb9d79d7c75288
+      size: 2125
     - path: metrics/validation.json
       hash: md5
-      md5: 169454af4d0195a4627a16a14556e9f3
-      size: 3372
+      md5: 5e4d591818a4be5e5f24337e58260edc
+      size: 3629
+  features:
+    cmd: python -m src.features build
+    deps:
+    - path: data/processed/clean
+      hash: md5
+      md5: c22dd5e565b3dd7856a012325341b9f3.dir
+      size: 51239764
+      nfiles: 5
+    - path: data/processed/interactions.parquet
+      hash: md5
+      md5: 490081b65f38ed171347202df6aceab4
+      size: 8793188
+    - path: data/processed/manifest.json
+      hash: md5
+      md5: 01001300fd7e3053230c4da5b31cb6bf
+      size: 10978
+    - path: data/processed/order_geo.parquet
+      hash: md5
+      md5: a5fa3a2c15ae7554e5b97e43970f8a7a
+      size: 8489949
+    - path: data/processed/orders_enriched.parquet
+      hash: md5
+      md5: fd984152b5910a5ecb3305b78b8194a9
+      size: 14981179
+    - path: data/processed/products_enriched.parquet
+      hash: md5
+      md5: 2f6956e804a21f8ea18fcac8c7e03ca2
+      size: 2316806
+    - path: data/processed/reviews_clean.parquet
+      hash: md5
+      md5: 9b7e3119aad99694344442b22009953a
+      size: 16849932
+    - path: params.yaml
+      hash: md5
+      md5: f417809c071d3fb6f4c896cd3cd14f96
+      size: 1257
+    - path: src/config.py
+      hash: md5
+      md5: bf8834bbd3260a4d903025f26ee8c340
+      size: 1234
+    - path: src/features.py
+      hash: md5
+      md5: e1643899e6b1a086219b1dc45c7ecdf1
+      size: 45841
+    - path: src/tracking.py
+      hash: md5
+      md5: 4355d03df93a6c57d1992c39da60809e
+      size: 6852
+    - path: src/validation.py
+      hash: md5
+      md5: 45c66a5989d163ad5bf44ded06cc1659
+      size: 22614
+    params:
+      params.yaml:
+        common.analysis_end: '2018-08-31'
+        features.horizon_days: 90
+        features.snapshots:
+          train:
+          - '2017-05-31'
+          - '2017-08-31'
+          val:
+          - '2017-12-31'
+          test:
+          - '2018-04-30'
+        validation.positive_rate_drift_ratio_limit: 3.0
+    outs:
+    - path: data/processed/features
+      hash: md5
+      md5: 4637c25fdb7521a1a3130a3ad2901d7e.dir
+      size: 14453195
+      nfiles: 5
+    - path: metrics/features.json
+      hash: md5
+      md5: b7b43eb466455b65b15fb2f33417bf6c
+      size: 3355

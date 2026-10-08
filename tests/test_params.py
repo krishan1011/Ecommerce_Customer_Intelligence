@@ -7,7 +7,14 @@ def test_phase_parameters_exist_with_expected_types():
     assert isinstance(PARAMS["common"]["analysis_end"], str)
     assert isinstance(PARAMS["common"]["valid_statuses"], list)
     assert isinstance(PARAMS["features"]["horizon_days"], int)
-    assert all(isinstance(value, str) for value in PARAMS["features"]["snapshots"])
+    snapshots = PARAMS["features"]["snapshots"]
+    assert set(snapshots) == {"train", "val", "test"}
+    assert all(
+        isinstance(snapshots[split], list)
+        and snapshots[split]
+        and all(isinstance(value, str) for value in snapshots[split])
+        for split in snapshots
+    )
 
     cleaning = PARAMS["cleaning"]
     assert isinstance(cleaning["winsor_lower"], float)
@@ -22,6 +29,7 @@ def test_phase_parameters_exist_with_expected_types():
     assert 0 <= validation["soft_null_rate_limit"] <= 1
     assert validation["row_count_tolerance_pct"] >= 0
     assert isinstance(PARAMS["dvc"]["remote_name"], str)
+    assert validation["positive_rate_drift_ratio_limit"] > 1
 
 
 def test_extraction_tuning_parameters_have_expected_types():
